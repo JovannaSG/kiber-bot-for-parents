@@ -3,10 +3,10 @@ import logging
 
 from aiogram import Router, F
 from aiogram.types import Message, ReplyKeyboardRemove
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.fsm.storage.base import StorageKey
+# from aiogram.fsm.storage.base import StorageKey
 
 from keyboards.main_menu_keyboard import build_main_menu
 from main import backend_client

@@ -6,6 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 
 from config import settings
+from handlers.main_handlers import router
 from backend_client import BackendClient
 
 logging.basicConfig(
@@ -32,19 +33,15 @@ backend_client = BackendClient(
 )
 
 
-async def main():
+async def main() -> None:
     try:
         logger.info("Starting bot...")
-        
-        # Регистрация хендлеров (их нужно импортировать после инициализации)
-        from handlers.main_handlers import router
-        
+
         # Подключаем роутеры
         dp.include_router(router)
-        
+
         logger.info("Bot initialized successfully. Starting polling...")
         await dp.start_polling(bot)
-        
     except Exception as e:
         logger.error(f"Failed to start bot: {e}")
         raise

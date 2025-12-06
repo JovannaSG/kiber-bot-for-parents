@@ -1,106 +1,86 @@
-# api/app/main.py
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 import logging
 
+from fastapi import FastAPI, Depends, HTTPException, Security
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.middleware.cors import CORSMiddleware
+
+from contextlib import asynccontextmanager
+
 from app.config import settings
-from app.database import engine, Base
-from app.middleware import LoggingMiddleware, ErrorHandlingMiddleware
+from routers import users, finance, admin, messages
+from services.alfacrm import AlfaCRMClient
 
-# Импортируем роутеры
-from routers import (
-    auth,
-    users,
-    finance,
-    admin,
-    messages
-)
-
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("api.log"),
-        logging.StreamHandler()
-    ]
-)
-
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Создание приложения
+security = HTTPBearer()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup
+    logger.info("Starting up...")
+    yield
+    # Shutdown
+    logger.info("Shutting down...")
+
+
 app = FastAPI(
-    title="KIBERone Backend API",
-    description="Backend для Telegram бота KIBERone с интеграцией AlfaCRM",
-    version="1.0.0",
-    docs_url="/docs" if settings.DEBUG else None,
-    redoc_url="/redoc" if settings.DEBUG else None
+    title=settings.app_name,
+    lifespan=lifespan
 )
 
-# Middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(ErrorHandlingMiddleware)
 
-# Подключаем роутеры
-app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-app.include_router(users.router, prefix="/users", tags=["Users"])
-app.include_router(finance.router, prefix="/finance", tags=["Finance"])
-app.include_router(admin.router, prefix="/admin", tags=["Admin"])
-app.include_router(messages.router, prefix="/messages", tags=["Messages"])
-
-
-@app.on_event("startup")
-async def startup():
-    """Действия при запуске приложения"""
-    logger.info("Starting KIBERone Backend API...")
-    
-    # Создаем таблицы в БД
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    
-    logger.info("Database tables created successfully")
+# Dependency для проверки токена
+async def verify_token(
+    credentials: HTTPAuthorizationCredentials = Security(security)
+) -> bool:
+    if credentials.credentials != settings.backend_api_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid API token"
+        )
+    return True
 
 
-@app.on_event("shutdown")
-async def shutdown():
-    """Действия при остановке приложения"""
-    logger.info("Shutting down KIBERone Backend API...")
-    await engine.dispose()
-
-
+# Health check
 @app.get("/")
 async def root():
-    """Корневой эндпоинт"""
-    return {
-        "message": "KIBERone Backend API",
-        "version": "1.0.0",
-        "docs": "/docs" if settings.DEBUG else None
-    }
+    return {"message": f"Welcome to {settings.app_name}"}
 
 
 @app.get("/health")
 async def health_check():
-    """Проверка здоровья приложения"""
-    return {
-        "status": "healthy",
-        "service": "kiberone-backend",
-        "timestamp": "2024-01-01T00:00:00Z"  # TODO: добавить реальное время
-    }
+    return {"status": "healthy"}
 
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host=settings.HOST,
-        port=settings.PORT,
-        reload=settings.DEBUG
-    )
+# Подключаем роуты с аутентификацией
+app.include_router(
+    users.router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_token)]
+)
+app.include_router(
+    finance.router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_token)]
+)
+app.include_router(
+    admin.router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_token)]
+)
+app.include_router(
+    messages.router,
+    prefix=settings.api_v1_prefix,
+    dependencies=[Depends(verify_token)]
+)

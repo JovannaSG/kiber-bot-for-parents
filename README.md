@@ -63,19 +63,8 @@ project/
 │   │   └── admin.py             # CRUD операции для настроек
 │   └── alembic/                 # Миграции (позже)
 │
-├── bot/                         # Telegram бот (уже есть)
 ├── requirements.txt
-├── .env
-├── .env.example
 └── docker-compose.yml
-│
-├── db/
-│   ├── models.py
-│   ├── session.py
-│   ├── crud.py
-│   └── __init__.py
-├── migrations/            # alembic
-└── run.py
 ```
 
 # Пример .env файла
