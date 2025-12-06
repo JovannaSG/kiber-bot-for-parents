@@ -20,12 +20,55 @@ project/
 │   ├── config.py
 │   └── __init__.py
 ├── api/
-│   ├── main.py
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py              # Основное приложение FastAPI
+│   │   ├── config.py            # Настройки
+│   │   ├── database.py          # Подключение к БД
+│   │   ├── dependencies.py      # Зависимости (DI)
+│   │   └── middleware.py        # Middleware (CORS, обработка ошибок)
 │   ├── routers/
-│   │   ├── admin.py
-│   │   ├── crm.py
-│   │   └── __init__.py
-│   └── __init__.py
+│   │   ├── __init__.py
+│   │   ├── auth.py              # Авторизация
+│   │   ├── users.py             # Пользователи
+│   │   ├── finance.py           # Финансы
+│   │   ├── admin.py             # Админка (правила)
+│   │   ├── messages.py          # Сообщения директору
+│   │   └── lessons.py           # Уроки (если нужно)
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   ├── user.py              # Схемы пользователей
+│   │   ├── finance.py           # Схемы финансов
+│   │   ├── messages.py          # Схемы сообщений
+│   │   └── admin.py             # Схемы админки
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── base.py              # Базовый класс моделей
+│   │   ├── user.py              # Модель пользователя
+│   │   ├── finance.py           # Модель финансов
+│   │   ├── message.py           # Модель сообщений
+│   │   └── admin.py             # Модель настроек
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── auth.py              # Сервис авторизации
+│   │   ├── users.py             # Сервис пользователей
+│   │   ├── finance.py           # Сервис финансов
+│   │   ├── messages.py          # Сервис сообщений
+│   │   └── alfacrm.py           # Сервис интеграции с AlfaCRM
+│   ├── crud/
+│   │   ├── __init__.py
+│   │   ├── user.py              # CRUD операции для пользователей
+│   │   ├── finance.py           # CRUD операции для финансов
+│   │   ├── message.py           # CRUD операции для сообщений
+│   │   └── admin.py             # CRUD операции для настроек
+│   └── alembic/                 # Миграции (позже)
+│
+├── bot/                         # Telegram бот (уже есть)
+├── requirements.txt
+├── .env
+├── .env.example
+└── docker-compose.yml
+│
 ├── db/
 │   ├── models.py
 │   ├── session.py
